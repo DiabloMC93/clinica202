@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Médico - Modo Oscuro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar para mejor estética en modo oscuro */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; 
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col items-center p-4 sm:p-8">
+
+    <div class="w-full max-w-3xl">
+        
+        <!-- Header / Contadores -->
+        <header class="flex flex-col sm:flex-row justify-between items-center bg-gray-800 p-4 rounded-xl shadow-lg mb-6 border border-gray-700">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-xl font-bold text-blue-400">Cuestionario: Bloques III, IV y V</h1>
+                <p class="text-sm text-gray-400" id="question-counter">Pregunta 1 de 17</p>
+            </div>
+            
+            <div class="flex space-x-4">
+                <div class="flex items-center bg-gray-700 px-4 py-2 rounded-lg">
+                    <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="font-bold text-green-400" id="correct-counter">0</span>
+                    <span class="ml-1 text-sm text-gray-300">Aciertos</span>
+                </div>
+                <div class="flex items-center bg-gray-700 px-4 py-2 rounded-lg">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <span class="font-bold text-red-400" id="incorrect-counter">0</span>
+                    <span class="ml-1 text-sm text-gray-300">Fallos</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor Principal del Quiz -->
+        <main id="quiz-container" class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-700 fade-in">
+            <h2 id="question-text" class="text-lg sm:text-xl font-medium mb-6 leading-relaxed">
+                Cargando pregunta...
+            </h2>
+            
+            <div id="options-container" class="space-y-3">
+                <!-- Las opciones se generan dinámicamente aquí -->
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button id="next-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg transition duration-200 shadow-md">
+                    Siguiente
+                </button>
+            </div>
+        </main>
+
+        <!-- Pantalla de Resultados (Oculta por defecto) -->
+        <section id="results-container" class="hidden bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center fade-in">
+            <h2 class="text-3xl font-bold text-blue-400 mb-4">¡Cuestionario completado!</h2>
+            <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-8">
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Aciertos</p>
+                    <p class="text-3xl font-bold text-green-400" id="final-correct">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Fallos</p>
+                    <p class="text-3xl font-bold text-red-400" id="final-incorrect">0</p>
+                </div>
+            </div>
+            <p id="final-message" class="text-lg mb-8 text-gray-300"></p>
+            <button onclick="restartQuiz()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition duration-200 shadow-md">
+                Volver a intentar
+            </button>
+        </section>
+
+    </div>
+
+    <script>
+        // Base de datos de preguntas
+        const questions = [
+            {
+                text: "19. Enferma de 45 años con historia de diarrea de 6-7 deposiciones diarias en los últimos 8-10 días, blandas, con restos alimentarios que no flotan en el agua, nocturnas y diurnas, sin ningún producto patológico, con flatulencia y distensión abdominal que ceden con la defecación. Pérdida importante de peso sin anorexia, anemia por deficiencia de hierro, vitamina B12 y ácido fólico que no fue corregida con tratamiento sustitutivo oral. ¿Cuál de las siguientes pruebas sería la más específica para llegar al diagnóstico etiológico?",
+                options: [
+                    "a. Cuantificación de las grasas en heces.",
+                    "b. Determinación de anticuerpos antiendomisio IgA.",
+                    "c. Tránsito baritado gastrointestinal.",
+                    "d. Biopsia intestinal."
+                ],
+                correct: 3 // d. Biopsia intestinal
+            },
+            {
+                text: "20. Ante una mujer de 60 años con antecedentes de un cuadro de malnutrición en la infancia que presenta una diarrea crónica a lo largo de 4 años con esteatorrea, anemia ferropénica y adelgazamiento progresivo, la causa más probable de su diarrea es:",
+                options: [
+                    "a. Enfermedad Celiaca.",
+                    "b. Enfermedad de Crohn.",
+                    "c. Colitis ulcerosa.",
+                    "d. Tumor maligno del ciego."
+                ],
+                correct: 0 // a. Enfermedad Celiaca
+            },
+            {
+                text: "21. En la enfermedad celiaca, ¿cuál es la prueba diagnóstica más sensible y específica?",
+                options: [
+                    "a. Biopsia yeyunal.",
+                    "b. Anticuerpos antigliadina.",
+                    "c. Anticuerpos antiendomisio.",
+                    "d. Prueba de sobrecarga de gluten."
+                ],
+                correct: 0 // a. Biopsia yeyunal (Gold standard, aunque los Ac antiendomisio son muy específicos)
+            },
+            {
+                text: "22. El dolor que se exacerba con la actividad puede ser debido a:",
+                options: [
+                    "a. Infección ósea",
+                    "b. Artritis",
+                    "c. Luxación de la articulación",
+                    "d. Distensión de la articulación"
+                ],
+                correct: 3 // d. Distensión de la articulación
+            },
+            {
+                text: "23. La inflamación de la articulación… señale la respuesta correcta:",
+                options: [
+                    "a. Forma tejido queloide",
+                    "b. No origina anquilosis",
+                    "c. Provoca deformidad",
+                    "d. Todas las respuestas son correctas"
+                ],
+                correct: 2 // c. Provoca deformidad
+            },
+            {
+                text: "24. En el tratamiento del esguince, la aplicación de calor debe hacerse…",
+                options: [
+                    "a. Alternando con compresas frías",
+                    "b. Primero se aplica calor y posteriormente frío",
+                    "c. Pasadas 36 horas del traumatismo",
+                    "d. Las primeras 12 horas frío y posteriormente calor"
+                ],
+                correct: 2 // c. Pasadas 36 horas del traumatismo (generalmente se indica frío inicial y luego calor)
+            },
+            {
+                text: "25. En un esguince de tobillo… señale la incorrecta:",
+                options: [
+                    "a. La fuerza ejercida sobrepasa el límite funcional perdiendo las superficies articulares su relación normal",
+                    "b. El bostezo articular se provoca por desinserción de la articulación",
+                    "c. Se produce hinchazón rápida por extravasación de sangre",
+                    "d. Todas las respuestas son incorrectas"
+                ],
+                correct: 0 // a. (La pérdida de relación de las superficies articulares es luxación, no esguince)
+            },
+            {
+                text: "26. El síndrome compartimental se produce por… Señale la incorrecta:",
+                options: [
+                    "a. Disminución del compartimento",
+                    "b. Aumento del contenido del compartimento",
+                    "c. Sutura a tensión de piel y subcutáneo",
+                    "d. Vendaje o yeso compresivo"
+                ],
+                correct: 2 // c. Sutura a tensión...
+            },
+            {
+                text: "27. Al valorar la parálisis del miembro superior en un paciente con luxación, existirá afectación del nervio cubital si…",
+                options: [
+                    "a. No puede mover el dedo pulgar",
+                    "b. No puede unir 1º y 5º dedo",
+                    "c. No flexiona los dedos",
+                    "d. No extiende los dedos"
+                ],
+                correct: 1 // b. No puede unir 1º y 5º dedo (Oposición/Aducción)
+            },
+            {
+                text: "28. Al valorar la parálisis del miembro inferior en un paciente con luxación, existirá afectación del nervio peroneo si…",
+                options: [
+                    "a. No existe flexión palmar de los dedos",
+                    "b. No existe flexión dorsal de los dedos",
+                    "c. No existe flexión dorsal del pie",
+                    "d. Todas las respuestas son correctas"
+                ],
+                correct: 2 // c. No existe flexión dorsal del pie (pie caído)
+            },
+            {
+                text: "29. En la fase de consolidación de las fracturas… señale la incorrecta:",
+                options: [
+                    "a. La infección retrasa la consolidación",
+                    "b. La proliferación celular origina red de fibrina que da tejido fibroso",
+                    "c. La osificación comienza con el acúmulo de los osteoblastos",
+                    "d. La formación del callo de fractura hace que los osteoblastos se acumulen formando una zona fibrosa"
+                ],
+                correct: 3 // d.
+            },
+            {
+                text: "30. En relación al hidrocele, indique la respuesta correcta:",
+                options: [
+                    "a. Todas las respuestas son correctas.",
+                    "b. El hidrocele comunicante generalmente está presente en adultos. La forma no comunicante aparece en recién nacidos y niños.",
+                    "c. Se trata de una tumoración no quística dentro del espacio delimitado por las hojas visceral y parietal de la túnica vaginal del testículo.",
+                    "d. Pueden clasificarse de acuerdo con la presencia o ausencia de comunicación con la cavidad peritoneal."
+                ],
+                correct: 3 // d. 
+            },
+            {
+                text: "31. Indique cuál de estas afirmaciones corresponde a la epididimitis aguda:",
+                options: [
+                    "a. La contaminación e infección del epidídimo pueden producirse por vía canalicular retrógrada, desde la uretra prostática y las vías seminales, así como las infecciones urinarias, entre otras.",
+                    "b. Es la patología aguda más frecuente del contenido escrotal en la edad prepuberal.",
+                    "c. Ninguna de las afirmaciones se relaciona con la epididimitis aguda.",
+                    "d. La semiología se presenta bruscamente, con dolor intraescrotal y tumefacción en el contenido de la bolsa afecta. El dolor alcanza su máxima intensidad en pocas horas."
+                ],
+                correct: 0 // a. (Infección retrógrada es la causa más común)
+            },
+            {
+                text: "32. En relación a la torsión intravaginal testicular, indique la respuesta correcta:",
+                options: [
+                    "a. Todas las respuestas son correctas.",
+                    "b. La semiología aguda se inicia por un dolor intraescrotal intenso, de aparición súbita, que suele irradiarse a menudo a la ingle y/o al epigastrio, con frecuencia acompañado de náuseas e incluso vómitos. El paciente generalmente no tiene fiebre ni tampoco presenta sintomatología urinaria.",
+                    "c. La exploración física demuestra que el testículo de la bolsa escrotal en la que se localiza el dolor está aumentado de volumen y es anormalmente sensible a la palpación. La piel escrotal suele estar edematosa y eritematosa.",
+                    "d. Es una afección aguda propia de la edad inmediatamente pospuberal, probablemente relacionada con el rápido crecimiento del testículo y su aumento de peso."
+                ],
+                correct: 1 // b. (El cuadro clásico de torsión testicular)
+            },
+            {
+                text: "33. La torsión testicular es una urgencia quirúrgica, ya que la viabilidad del testículo torsionado se relaciona con el tiempo transcurrido desde la aparición de los síntomas y la intervención quirúrgica. Indique la respuesta correcta:",
+                options: [
+                    "a. Cuando la torsión se opera dentro de las primeras 15 horas la viabilidad llega al 80%.",
+                    "b. Después de transcurridas 15 horas, la viabilidad desciende al 15%; y pasadas las 24 horas todos los testículos están infartados y son irrecuperables.",
+                    "c. Decidida la intervención quirúrgica urgente, esta consiste en la exploración operatoria del testículo y orquidopexia del otro testículo, que presenta la misma anormalidad anatómica en aproximadamente un 50% de los casos.",
+                    "d. Todas las respuestas son correctas."
+                ],
+                correct: 2 // c. (Se hace orquidopexia bilateral preventiva)
+            },
+            {
+                text: "34. En relación a la orquitis viral, indique la respuesta correcta:",
+                options: [
+                    "a. La semiología aguda de la orquitis viral suele manifestarse justo después de la aparición de la tumefacción parotídea; se admite que la orquitis puede ser la única manifestación clínica de la enfermedad viral.",
+                    "b. Se observa dolor agudo extraescrotal que se asocia con una tumefacción testicular, así como inflamación testicular.",
+                    "c. Entre los adultos que padecen una parotiditis aguda, la orquitis se desarrolla entre el 15 y el 20% de los casos. Es muy rara en los niños antes de la pubertad.",
+                    "d. La exploración quirúrgica está indicada siempre para el diagnóstico de la torsión testicular."
+                ],
+                correct: 2 // c.
+            },
+            {
+                text: "7. La gangrena de Fournier está causada por bacterias...señale la incorrecta:",
+                options: [
+                    "a. Cocos Gram (-)",
+                    "b. Aerobias Gram (-)",
+                    "c. Anaerobias",
+                    "d. Cocos Gram (+)"
+                ],
+                correct: 0 // a. Cocos Gram (-) suelen ser los menos implicados frente a bacilos gram negativos y anaerobios.
+            }
+        ];
+
+        // Estado del Quiz
+        let currentQuestionIndex = 0;
+        let correctAnswers = 0;
+        let incorrectAnswers = 0;
+        let hasAnswered = false;
+
+        // Referencias del DOM
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const questionCounter = document.getElementById('question-counter');
+        const correctCounter = document.getElementById('correct-counter');
+        const incorrectCounter = document.getElementById('incorrect-counter');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsContainer = document.getElementById('results-container');
+
+        // Inicializar el Quiz
+        function loadQuestion() {
+            hasAnswered = false;
+            nextBtn.classList.add('hidden');
+            
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // Actualizar contadores superiores
+            questionCounter.innerText = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            
+            // Renderizar pregunta
+            questionText.innerText = currentQuestion.text;
+            
+            // Limpiar y renderizar opciones
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((optionText, index) => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-4 rounded-lg bg-gray-700 hover:bg-gray-600 border border-gray-600 transition duration-150 ease-in-out focus:outline-none';
+                button.innerText = optionText;
+                button.onclick = () => selectOption(index, button);
+                optionsContainer.appendChild(button);
+            });
+
+            // Animación de aparición
+            quizContainer.classList.remove('fade-in');
+            void quizContainer.offsetWidth; // Trigger reflow
+            quizContainer.classList.add('fade-in');
+        }
+
+        // Manejar la selección de una respuesta
+        function selectOption(selectedIndex, selectedButton) {
+            if (hasAnswered) return; // Evitar que responda dos veces
+            hasAnswered = true;
+
+            const currentQuestion = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === currentQuestion.correct;
+            const allButtons = optionsContainer.querySelectorAll('button');
+
+            // Deshabilitar todos los botones
+            allButtons.forEach(btn => {
+                btn.classList.remove('hover:bg-gray-600', 'cursor-pointer');
+                btn.classList.add('cursor-default', 'opacity-70');
+            });
+
+            if (isCorrect) {
+                // Respuesta correcta
+                selectedButton.classList.remove('bg-gray-700', 'border-gray-600');
+                selectedButton.classList.add('bg-green-900', 'border-green-500', 'text-green-100', 'opacity-100');
+                correctAnswers++;
+                correctCounter.innerText = correctAnswers;
+            } else {
+                // Respuesta incorrecta
+                selectedButton.classList.remove('bg-gray-700', 'border-gray-600');
+                selectedButton.classList.add('bg-red-900', 'border-red-500', 'text-red-100', 'opacity-100');
+                incorrectAnswers++;
+                incorrectCounter.innerText = incorrectAnswers;
+
+                // Resaltar la correcta para que aprenda
+                const correctButton = allButtons[currentQuestion.correct];
+                correctButton.classList.remove('bg-gray-700', 'border-gray-600');
+                correctButton.classList.add('bg-green-900', 'border-green-500', 'text-green-100', 'opacity-100');
+            }
+
+            // Mostrar el botón de siguiente
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.innerText = 'Ver Resultados';
+            } else {
+                nextBtn.innerText = 'Siguiente';
+            }
+            nextBtn.classList.remove('hidden');
+        }
+
+        // Ir a la siguiente pregunta o finalizar
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        // Pantalla de finalización
+        function showResults() {
+            quizContainer.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            
+            document.getElementById('final-correct').innerText = correctAnswers;
+            document.getElementById('final-incorrect').innerText = incorrectAnswers;
+
+            const percentage = (correctAnswers / questions.length) * 100;
+            const messageEl = document.getElementById('final-message');
+            
+            if (percentage === 100) {
+                messageEl.innerText = "¡Excelente! Has acertado todas las preguntas.";
+            } else if (percentage >= 70) {
+                messageEl.innerText = "¡Muy buen trabajo! Tienes un gran conocimiento sobre la materia.";
+            } else if (percentage >= 50) {
+                messageEl.innerText = "Has aprobado, pero hay margen de mejora. ¡Sigue repasando!";
+            } else {
+                messageEl.innerText = "Te recomendamos volver a estudiar estos conceptos e intentarlo de nuevo.";
+            }
+        }
+
+        // Reiniciar
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            correctAnswers = 0;
+            incorrectAnswers = 0;
+            correctCounter.innerText = "0";
+            incorrectCounter.innerText = "0";
+            
+            resultsContainer.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            
+            loadQuestion();
+        }
+
+        // Iniciar la primera pregunta al cargar
+        loadQuestion();
+
+    </script>
+</body>
+</html>
